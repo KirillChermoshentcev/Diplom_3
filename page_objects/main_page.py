@@ -1,5 +1,4 @@
 import allure
-import helpers
 from page_objects.base_page import BasePage
 from locators.main_page_locators import MainPageLocators
 from selenium.webdriver.support.wait import WebDriverWait
@@ -100,28 +99,16 @@ class MainPage(BasePage):
         self.wait_of_closing_element(MainPageLocators.MODAL_CONFIRM_ORDER)
         return not self.check_element_is_displaying(MainPageLocators.MODAL_CONFIRM_ORDER)
 
-    @staticmethod  # Метод кликает по элементу с обработкой исключения и ожиданием исчезновения оверлея.
-    def skip_overlay(driver, element_locator, overlay_locator=None, max_retries=5):
+    @staticmethod
+    def get_auth_button_locator():
+        # Локатор кнопки авторизации
+        return MainPageLocators.AUTH_BUTTON_ACC
 
-        wait = WebDriverWait(driver, 10)
-        retries = 0
+    @staticmethod
+    def get_overlay_locator():
+        # Локатор оверлея
+        return MainPageLocators.OVERLAY
 
-        while retries < max_retries:
-            try:
-                if overlay_locator:
-                    wait.until(EC.invisibility_of_element_located(overlay_locator))
-
-                element_locator = wait.until(EC.element_to_be_clickable(MainPageLocators.AUTH_BUTTON_ACC))
-                element_locator.click()
-                return
-            except ElementClickInterceptedException:
-                pass
-
-                try:
-                    if overlay_locator:
-                        wait.until(EC.invisibility_of_element_located(overlay_locator))
-                except TimeoutException:
-                    print("Оверлей не исчез вовремя.")
-                    raise
-
-        raise Exception(f"Не удалось кликнуть по элементу после {max_retries} попыток.")
+    def click_auth_button(self):
+        # Локатор скрыт внутри метода
+        self.skip_overlay(self.driver, self.get_auth_button_locator(), self.get_overlay_locator())

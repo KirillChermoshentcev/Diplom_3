@@ -1,6 +1,7 @@
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
 import allure
 
 
@@ -16,7 +17,7 @@ class BasePage:
 
     @allure.step('Ожидание прогрузки элемента')
     def wait_visibility_of_element(self, locator, timeout=15):
-        WebDriverWait(self.driver, timeout).until(EC.visibility_of_element_located(locator))
+        return WebDriverWait(self.driver, timeout).until(EC.visibility_of_element_located(locator))
 
     @allure.step('Ожидание кликабельности элемента')
     def wait_until_element_is_clickable(self, locator, timeout=10):
@@ -43,8 +44,8 @@ class BasePage:
 
     @allure.step('Получение текста на элементе')
     def get_text_from_element(self, locator):
-        WebDriverWait(self.driver, timeout=15).until(EC.visibility_of_element_located(locator))
-        return self.driver.find_element(*locator).text
+        element = self.wait_visibility_of_element(locator)
+        return element.text
 
     @allure.step('Ввод символов в поле ввода')
     def send_keys_to_input(self, locator, keys):
@@ -58,5 +59,30 @@ class BasePage:
     def get_current_url(self):
         return self.driver.current_url
 
+    @staticmethod  # Метод кликает по элементу с обработкой исключения и ожиданием исчезновения оверлея.
+    def skip_overlay(driver, element_locator, overlay_locator=None, max_retries=5):
+
+        wait = WebDriverWait(driver, 10)
+        retries = 0
+
+        while retries < max_retries:
+            try:
+                if overlay_locator:
+                    wait.until(EC.invisibility_of_element_located(overlay_locator))
+
+                element_locator = wait.until(EC.element_to_be_clickable(element_locator))
+                element_locator.click()
+                return
+            except ElementClickInterceptedException:
+                pass
+
+                try:
+                    if overlay_locator:
+                        wait.until(EC.invisibility_of_element_located(overlay_locator))
+                except TimeoutException:
+                    print("Оверлей не исчез вовремя.")
+                    raise
+
+        raise Exception(f"Не удалось кликнуть по элементу после {max_retries} попыток.")
 
 

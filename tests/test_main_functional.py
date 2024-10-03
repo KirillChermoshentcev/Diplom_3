@@ -1,6 +1,5 @@
-from page_objects.main_page import MainPage
 from page_objects.feed_page import FeedPage
-from conftest import driver, registration_new_user_and_delete
+from conftest import *
 import allure
 
 
@@ -42,9 +41,12 @@ class TestMainFunctional:
         assert main_page.get_count_of_ingredient() == '2'
 
     @allure.title('Проверка, что залогиненный пользователь может оформить заказ')
-    def test_authorized_user_can_make_order_is_success(self, driver, registration_new_user_and_delete):
+    def test_authorized_user_can_make_order_is_success(self, driver, login_user):
+        driver = login_user
+
         main_page = MainPage(driver)
         main_page.wait_visibility_title_of_page()
         main_page.move_ingredient_to_burger()
         main_page.click_on_make_order_button()
+
         assert main_page.check_modal_confirmation_of_order_is_displaying()

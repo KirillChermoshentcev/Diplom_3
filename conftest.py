@@ -49,6 +49,15 @@ def registration_new_user_and_delete(driver):
     else:
         raise ValueError("AccessToken отсутствует в ответе")
 
+    yield {'payload': payload, 'accessToken': response_body['accessToken']}
+
+    access_token = response_body['accessToken']
+    requests.delete(Endpoints.DELETE_USER, headers={'Authorization': access_token})
+
+
+@pytest.fixture
+def login_user(driver, registration_new_user_and_delete):
+    payload = registration_new_user_and_delete['payload']
     main_page = MainPage(driver)
     main_page.click_on_auth_button_main_page()
     login_page = LoginPage(driver)
@@ -57,10 +66,7 @@ def registration_new_user_and_delete(driver):
     login_page.send_password(payload['password'])
     login_page.click_on_enter_button()
 
-    yield {'driver': driver, 'payload': payload, 'accessToken': response_body['accessToken']}
-
-    access_token = response_body['accessToken']
-    requests.delete(Endpoints.DELETE_USER, headers={'Authorization': access_token})
+    yield driver
 
 
 @pytest.fixture(scope='function')
